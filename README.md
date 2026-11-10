@@ -2,6 +2,8 @@
 
 Predicting nightly prices of Airbnb listings in Rome and understanding what drives them (location, property type, capacity), using open data from [Inside Airbnb](https://insideairbnb.com/get-the-data/).
 
+![Price map](reports/figures/price_map.png)
+
 ## Business question
 What drives the nightly price of an Airbnb listing in Rome, and how can a host estimate a fair price for a new listing?
 
@@ -31,6 +33,18 @@ The raw data is not stored in this repository (see `.gitignore`). Download `list
 - **Centro Storico is the most expensive area:** median 235.7 per night, versus 113-174 in the other municipi. It also has the widest spread of prices, which suggests that finer location features (distance to landmarks) should add information.
 - **Other municipi differ only slightly:** the boxes overlap heavily, so the district alone does not explain the price.
 - **Property type matters:** entire homes (25,281 listings, median 205.4) are about 48% more expensive than private rooms (8,262 listings, median 139.0). Hotel rooms (154) and shared rooms (72) are rare, so their statistics are unreliable.
+**Capacity:** the median price grows steadily with the number of guests, from 85 (1 guest) to 613 (12 guests). Price per guest falls from ~85 (1 guest) to ~74 (2) and ~49 (4), then stays around 45-51 for 5+ guests. Listings for 2 and 4 guests make up ~59% of the data, and groups of 9+ guests are small (under 270 listings each).
+- **Distance to landmarks:** across the whole city, log(price) is negatively
+  correlated with the distance to all five landmarks (r from -0.28 to -0.36,
+  strongest for the Pantheon, Trevi and St. Peter's). Inside Centro Storico
+  the picture is more specific: the correlation stays strong for the Pantheon
+  (-0.35) and Trevi (-0.33) but almost disappears for Termini (-0.05) and
+  weakens for the Colosseum (-0.12) and St. Peter's (-0.11). Within the
+  centre, price therefore depends on proximity to the historic core
+  (Pantheon / Navona / Trevi) rather than on distance to landmarks in general.
+  The "distance to nearest landmark" feature is weaker (-0.18) than the
+  Pantheon distance alone, because different listings have different nearest
+  landmarks.
 
 ## Figures
 | | |
@@ -39,6 +53,24 @@ The raw data is not stored in this repository (see `.gitignore`). Download `list
 
 *(add `price_map.png` here once it is created)*
 
+## Modelling
+- **Features (v1):** accommodates, bedrooms, beds, latitude, longitude, distances to 5 landmarks, nearest-landmark distance, room type, municipio. Reviews and ratings are deliberately excluded: a new listing has none.
+- **Baseline:** median log price per (municipio, room type), computed on the training part of each fold only.
+- **Model:** LightGBM (500 trees, learning rate 0.05, 31 leaves), target `log(1 + price)`.
+- **Validation:** 5-fold CV. Because one host often lists several similar apartments (17,974 hosts for 33,769 listings), I also ran GroupKFold by `host_id`.
+
+## Results
+| Model | CV | MAE all | MAE centre | MAE rest | R² (log) |
+|---|---|---|---|---|---|
+| Baseline | random K-fold | 86.7 | 108.6 | 63.0 | 0.302 |
+| Baseline | grouped by host | ... | ... | ... | ... |
+| LightGBM v1 | random K-fold | 66.0 | 79.1 | 51.7 | 0.578 |
+| LightGBM v1 | grouped by host | 67.5 | 80.8 | 53.0 | 0.553 |
+| LightGBM v2 (+ amenities, bathrooms, ...) | grouped by host | ... | ... | ... | ... |
+
+- LightGBM v1 reduces MAE by about 22% compared with the baseline (67.5 vs 86.7, grouped vs random CV).
+- Random K-fold is slightly optimistic: grouping by host raises MAE by about 1.5 (2%), so the grouped numbers are the fairer estimate.
+
 ## Project structure
 ```
 airbnb-rome-price/
@@ -46,8 +78,11 @@ airbnb-rome-price/
 ├── requirements.txt
 ├── data/raw/            # not tracked by git
 ├── notebooks/
-│   └── 01_eda.ipynb
+│   ├── 01_eda.ipynb
+│   └── 02_modeling.ipynb
 ├── src/
+│   ├── data.py
+│   └── features.py
 └── reports/figures/
 ```
 
@@ -60,13 +95,11 @@ pip install -r requirements.txt
 Download the data into `data/raw/` and run `notebooks/01_eda.ipynb`.
 
 ## Plan
-- [x] Repository setup and data loading
-- [x] Price cleaning and outlier filtering
-- [x] EDA: price distribution, price by municipio and room type
-- [ ] EDA: price vs capacity, price map
-- [ ] Feature engineering (distance to Colosseum, Termini, Vatican, Pantheon, Trevi; amenities)
-- [ ] Baseline model and LightGBM
-- [ ] Validation: K-fold, plus GroupKFold by municipio as a generalisation check
+- [x] Repository setup, data loading, cleaning
+- [x] EDA: price distribution, municipio, room type, capacity, price map
+- [x] Distance features and correlation check
+- [x] Baseline and LightGBM v1, host-grouped CV
+- [ ] Extra features: amenities count, bathrooms, property type, distance to Piazza Navona
 - [ ] SHAP interpretation and error analysis (centre vs rest of the city)
 - [ ] Recommendations
 
