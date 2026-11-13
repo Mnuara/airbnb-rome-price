@@ -55,21 +55,25 @@ The raw data is not stored in this repository (see `.gitignore`). Download `list
 
 ## Modelling
 - **Features (v1):** accommodates, bedrooms, beds, latitude, longitude, distances to 5 landmarks, nearest-landmark distance, room type, municipio. Reviews and ratings are deliberately excluded: a new listing has none.
+- **Features (v2):** v1 plus number of amenities, number of bathrooms, minimum nights, property type
 - **Baseline:** median log price per (municipio, room type), computed on the training part of each fold only.
 - **Model:** LightGBM (500 trees, learning rate 0.05, 31 leaves), target `log(1 + price)`.
 - **Validation:** 5-fold CV. Because one host often lists several similar apartments (17,974 hosts for 33,769 listings), I also ran GroupKFold by `host_id`.
 
 ## Results
+## Results
 | Model | CV | MAE all | MAE centre | MAE rest | R² (log) |
 |---|---|---|---|---|---|
-| Baseline | random K-fold | 86.7 | 108.6 | 63.0 | 0.302 |
-| Baseline | grouped by host | ... | ... | ... | ... |
-| LightGBM v1 | random K-fold | 66.0 | 79.1 | 51.7 | 0.578 |
-| LightGBM v1 | grouped by host | 67.5 | 80.8 | 53.0 | 0.553 |
-| LightGBM v2 (+ amenities, bathrooms, ...) | grouped by host | ... | ... | ... | ... |
+| Baseline | grouped by host | 86.8 | 108.6 | 63.1 | 0.299 |
+| LightGBM v1 (location + capacity) | grouped by host | 67.5 | 80.8 | 53.0 | 0.553 |
+| LightGBM v2 (+ amenities, bathrooms, minimum nights, property type) | grouped by host | 64.1 | 76.8 | 50.2 | 0.600 |
 
-- LightGBM v1 reduces MAE by about 22% compared with the baseline (67.5 vs 86.7, grouped vs random CV).
-- Random K-fold is slightly optimistic: grouping by host raises MAE by about 1.5 (2%), so the grouped numbers are the fairer estimate.
+- LightGBM v2 reduces MAE by about 26% compared with the baseline
+  (64.1 vs 86.8) and doubles R² on log price (0.60 vs 0.30).
+- Adding listing features (v1 → v2) lowers MAE by about 5% (67.5 → 64.1).
+- Random K-fold gave slightly optimistic numbers for v1 (MAE 66.0, R² 0.578),
+  because one host often lists several similar apartments, so grouping by
+  host gives the fairer estimate.
 
 ## Project structure
 ```

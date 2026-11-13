@@ -1,4 +1,6 @@
 import numpy as np
+import json
+
 
 LANDMARKS = {
     "colosseum": (41.8902, 12.4922),
@@ -25,4 +27,12 @@ def add_distance_features(df):
         df[f"dist_{name}_km"] = haversine_km(df["latitude"], df["longitude"], lat, lon)
     dist_cols = [f"dist_{n}_km" for n in LANDMARKS]
     df["dist_nearest_landmark_km"] = df[dist_cols].min(axis=1)
+    return df
+
+def add_listing_features(df):
+    df = df.copy()
+    df["n_amenities"] = df["amenities"].apply(
+        lambda s: len(json.loads(s)) if isinstance(s, str) else np.nan)
+    df["bathrooms_num"] = (df["bathrooms_text"].str.extract(r"(\d+\.?\d*)")[0]
+                           .astype(float))
     return df
