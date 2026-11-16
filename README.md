@@ -105,6 +105,10 @@ The raw data is not stored in this repository (see `.gitignore`). Download `list
   lower the MAE to 56.8 (for illustration only: this filters on the true
   price, which is unknown for a new listing).
 - For this reason both MAE and median absolute error are reported.
+- Adding the distance to Piazza Navona (v3) did not improve the model
+  (MAE 64.1, R² 0.601 vs 0.600 for v2, same data and folds). It lies about
+  500 m from the Pantheon, so the information overlaps. It was not kept in the
+  final feature set.
 
 ## Project structure
 ```
