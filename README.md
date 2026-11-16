@@ -75,6 +75,37 @@ The raw data is not stored in this repository (see `.gitignore`). Download `list
   because one host often lists several similar apartments, so grouping by
   host gives the fairer estimate.
 
+  ## Interpretation (SHAP, LightGBM v2)
+![SHAP summary](reports/figures/shap_summary.png)
+![SHAP: distance to the Pantheon](reports/figures/shap_pantheon.png)
+
+- The most influential features are the distance to the Pantheon, capacity
+  (accommodates), the distance to Trevi, bedrooms and bathrooms.
+- The effect of the distance to the Pantheon is non-linear: the contribution
+  drops sharply within the first ~3 km and flattens beyond ~5 km. Between the
+  centre and the outskirts the model's log-price differs by roughly 0.5
+  (about 1.6x), all else equal.
+- Long minimum stays (a month or more) push the nightly price down strongly,
+  probably reflecting discounted mid-term rentals (hypothesis, not tested).
+- More amenities add a modest premium.
+
+## Error analysis
+- The model shrinks predictions towards the middle: the cheapest 20% of
+  listings are overestimated (median error +27) and the most expensive 20% are
+  underestimated (median error -88).
+- Relative error is stable across capacity (about 19-23%), while absolute
+  error grows with price.
+- All 20 largest errors are underestimates of listings priced 1500-2000;
+  7 of them are priced exactly 2000, which suggests placeholder or erroneous
+  prices (e.g. a private room for 2 guests at 2000/night).
+- Hotel and shared rooms are rare (154 and 72 listings), so their errors are unreliable.
+- Median absolute error is 35.7, well below the MAE of 64.1: the average is
+  inflated by a small tail. Listings priced above 1000 are only 1.0% of the
+  data but produce 12.2% of the total absolute error. Excluding them would
+  lower the MAE to 56.8 (for illustration only: this filters on the true
+  price, which is unknown for a new listing).
+- For this reason both MAE and median absolute error are reported.
+
 ## Project structure
 ```
 airbnb-rome-price/
