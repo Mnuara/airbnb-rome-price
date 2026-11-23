@@ -4,6 +4,10 @@ Predicting nightly prices of Airbnb listings in Rome and understanding what driv
 
 ![Price map](reports/figures/price_map.png)
 
+**[Live demo: Rome Airbnb price estimator](https://airbnb-rome-price-pqy3sfmquevpdg6h5javbb.streamlit.app/)**
+
+![App screenshot](reports/figures/app_screenshot.png)
+
 ## Business question
 What drives the nightly price of an Airbnb listing in Rome, and how can a host estimate a fair price for a new listing?
 

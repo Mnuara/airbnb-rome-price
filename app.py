@@ -73,6 +73,10 @@ n_amenities = c1.slider("Number of amenities", 0, 100, 30)
 minimum_nights = c2.number_input("Minimum nights", 1, 365, 2)
 
 if st.button("Estimate price", type="primary"):
+    if bedrooms * 4 + 2 < accommodates:
+        st.warning("This many guests for so few bedrooms is unusual; "
+               "the estimate may be unreliable.")
+    
     hood = nearest_neighbourhood(lat, lon, lookup)
     X = build_row({
         "accommodates": accommodates, "bedrooms": bedrooms, "beds": beds,
@@ -89,7 +93,7 @@ if st.button("Estimate price", type="primary"):
     lo, hi = min(lo, point), max(hi, point)
 
     st.metric("Estimated nightly price", f"{point:,.0f}")
-    st.write(f"Typical range: **{lo:,.0f} to {hi:,.0f}**")
+    st.write(f"Likely range: **{lo:,.0f} to {hi:,.0f}**")
     st.caption(f"Municipio detected: {hood}. In validation, {COVERAGE_TEXT}.")
     st.caption("Prices are in the currency used by Inside Airbnb. "
                "This is a statistical estimate from one data snapshot, not a guarantee.")
